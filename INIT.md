@@ -41,22 +41,41 @@ Any static server, started **from the project root** (the folder with
 No build step. After changing the config, **hard-reload** the page
 (Cmd+Shift+R) so the browser drops cached modules.
 
-## 3. Install the schema introspection function
+## 3. Install the SQL functions
+
+Supacrud ships two `security definer` functions in [`supabase/`](supabase/).
+Both are executable by signed-in (`authenticated`) users only, reveal
+*structure* only (never table data), and are safe to re-run any time —
+they are `create or replace`. Install each the same way:
+
+1. Supabase dashboard → **SQL Editor**
+2. Paste the full contents of the file
+3. **Run**
+
+### 3.1 Schema introspection — `supacrud_schema.sql` (required)
 
 Newer Supabase projects restrict the PostgREST OpenAPI endpoint
 (`GET /rest/v1/`) to the `service_role` key, so Supacrud can't discover
-your tables with the anon key alone. Symptom:
+your tables with the anon key alone. Symptom when missing:
 
 > `Schema introspection failed (HTTP 401)`
 
-Fix — install the RPC Supacrud prefers:
+Install [`supabase/supacrud_schema.sql`](supabase/supacrud_schema.sql).
+It returns tables, columns, primary/foreign keys, enum values, and the
+per-table RLS facts behind the "🔒 Access denied by Row Level Security"
+empty states.
 
-1. Supabase dashboard → **SQL Editor**
-2. Paste the full contents of [`supabase/supacrud_schema.sql`](supabase/supacrud_schema.sql)
-3. **Run**
+### 3.2 Backup metadata — `supacrud_backup.sql` (required for backups)
 
-The function only reveals table/column *structure*, only to signed-in
-(`authenticated`) users, and data access still goes through RLS.
+Powers the **⬇ Backup** header button (see step 6). Symptom when missing —
+a red toast on clicking Backup:
+
+> `Backup needs the metadata function — run supabase/supacrud_backup.sql…`
+
+Install [`supabase/supacrud_backup.sql`](supabase/supacrud_backup.sql).
+It returns what PostgREST can't expose to the browser: role attributes
+(never passwords), full RLS policy definitions, and column default
+expressions.
 
 ## 4. GitHub login (optional)
 
@@ -169,12 +188,32 @@ using ((auth.jwt() ->> 'email') = 'you@example.com')
   `is_admin` flag or a custom JWT claim over hardcoding UUIDs into
   policies.
 
+## 6. Database backups
+
+With `supacrud_backup.sql` installed (step 3.2), the **⬇ Backup** button
+in the top-right header downloads a single `supacrud-backup-YYYY-MM-DD.zip`
+containing three modular files, separated like `supabase db dump`:
+
+1. `1-roles.sql` — role names + attributes (never passwords)
+2. `2-schema.sql` — enums, tables, PKs/FKs, `enable row level security`,
+   and full `create policy` statements
+3. `3-data.sql` — `insert` statements for every table
+
+(The zip is built in the browser by Supacrud's own dependency-free writer,
+compressed with the native `CompressionStream` API.)
+
+Honest limitations (it's a browser, not pg_dump): data contains only rows
+**your RLS lets you read**; DDL is reconstructed from introspection (no
+varchar lengths, triggers, views, or grants). For byte-exact dumps use
+`supabase db dump` or `pg_dump`.
+
 ## Troubleshooting recap
 
 | Symptom | Cause | Fix |
 |---|---|---|
 | "No configuration found" | `supacrud.config.js` missing **or has a JS syntax error** | step 1, check browser console |
-| `Schema introspection failed (HTTP 401)` | OpenAPI endpoint restricted to service_role | step 3 |
+| `Schema introspection failed (HTTP 401)` | OpenAPI endpoint restricted to service_role | step 3.1 |
+| "Backup needs the metadata function" toast | `supacrud_backup_meta()` not installed | step 3.2 |
 | `Unsupported provider: provider is not enabled` | GitHub provider not enabled in Supabase | step 4b |
 | Login works, wrong page after GitHub redirect | app URL missing from Redirect URLs | step 4c |
 | "🔒 Access denied by Row Level Security" on a table | RLS enabled, no SELECT policy for signed-in users | step 5 |

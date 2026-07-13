@@ -62,6 +62,7 @@ export function parseRpcSchema(rpcTables, config = {}) {
         name: c.name,
         type: jsonTypeOf(format),
         format,
+        nullable: !!c.is_nullable,
         required: !c.is_nullable && !c.has_default,
         hasDefault: !!c.has_default,
         isPrimaryKey: !!c.is_pk,
@@ -133,6 +134,8 @@ export function parseColumn(name, prop, required) {
     name,
     type: prop.type ?? 'string',
     format: prop.format ?? '',
+    // OpenAPI approximation: PostgREST lists non-nullable columns as required.
+    nullable: !required.has(name),
     required: required.has(name) && prop.default === undefined,
     hasDefault: prop.default !== undefined,
     isPrimaryKey: desc.includes('<pk/>'),

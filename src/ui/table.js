@@ -1,5 +1,5 @@
 import { el } from './dom.js';
-import { formatTemporal } from './format.js';
+import { formatTemporal, stripHtml } from './format.js';
 
 /**
  * TailAdmin-styled data table.
@@ -134,6 +134,13 @@ function formatCell(value, column) {
     return el('span', { class: 'whitespace-nowrap', title: String(value) },
       formatTemporal(value, mode));
   }
-  const text = typeof value === 'object' ? JSON.stringify(value) : String(value);
-  return el('span', { class: 'block max-w-xs truncate', title: text }, text);
+  let text = typeof value === 'object' ? JSON.stringify(value) : String(value);
+  // Rich text columns store HTML — show clean text in the grid.
+  if (column.fieldWidget === 'richtext') text = stripHtml(text);
+  // display: 'paragraph' → a few clamped lines instead of one truncated
+  // line; the native title tooltip still carries the longer text.
+  if (column.display === 'paragraph') {
+    return el('p', { class: 'line-clamp-3 min-w-48 max-w-md whitespace-normal', title: text.slice(0, 600) }, text);
+  }
+  return el('span', { class: 'block max-w-xs truncate', title: text.slice(0, 600) }, text);
 }

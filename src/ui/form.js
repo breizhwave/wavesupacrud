@@ -35,6 +35,7 @@ export function buildForm({ table, cfg, row = null }) {
     fields.push({ column, field });
 
     const wide = overrides.widget === 'json' || overrides.widget === 'textarea' ||
+      overrides.widget === 'richtext' ||
       column.format === 'json' || column.format === 'jsonb' || column.format === 'text';
     grid.append(
       el('div', { class: wide ? 'md:col-span-2' : '' },

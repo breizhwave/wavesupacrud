@@ -4,6 +4,11 @@
  * @param {'date'|'datetime'} mode
  * @returns {string}
  */
+/** HTML → plain text via an inert document (nothing runs or loads). */
+export function stripHtml(html) {
+  return new DOMParser().parseFromString(String(html), 'text/html').body.textContent ?? '';
+}
+
 export function formatTemporal(value, mode = 'datetime') {
   const s = String(value);
   // Plain dates pass through untouched: parsing '2026-07-13' as a Date

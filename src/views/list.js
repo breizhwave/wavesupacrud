@@ -169,10 +169,12 @@ function initialSort(table, cfg) {
 
 function visibleColumns(table, cfg) {
   // Carry display-affecting field overrides onto the column objects the
-  // table renders from (e.g. fields.created_at.display: 'date').
+  // table renders from (e.g. display: 'date'|'paragraph', and the widget
+  // so richtext HTML gets stripped in cells).
   const withOverrides = (column) => {
-    const display = cfg.fields?.[column.name]?.display;
-    return display ? { ...column, display } : column;
+    const field = cfg.fields?.[column.name];
+    if (!field?.display && !field?.widget) return column;
+    return { ...column, display: field.display, fieldWidget: field.widget };
   };
   if (cfg.listColumns) {
     return cfg.listColumns

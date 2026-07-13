@@ -33,7 +33,8 @@ export default {
     //   defaultSort: { column: 'created_at', ascending: false }, // initial list order
 
     //   fields: {
-    //     body: { widget: 'textarea', label: 'Content' },
+    //     body: { widget: 'richtext', display: 'paragraph' }, // HTML editor; grid shows clamped text
+    //     summary: { widget: 'textarea', label: 'Short summary' },
     //     metadata: { widget: 'json' },
     //     created_at: { display: 'date' }, // list shows 2026-07-13 instead of 2026-07-13 10:42
     //   },

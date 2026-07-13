@@ -304,12 +304,20 @@ Behaviour of each key:
   keep the real column name, since filters/sort target it).
 - **`fields.<column>.widget`** — form input type, overriding the
   inferred one: `text`, `textarea`, `number`, `boolean`, `datetime`,
-  `enum`, `json` — plus anything added via `registerWidget(name, impl)`.
-- **`fields.<column>.display`** — how date/timestamp values render in
-  the **list view**: `'datetime'` → `2026-07-13 10:42`, `'date'` →
-  `2026-07-13` (both local time; hover shows the raw value). Defaults:
-  timestamp columns → `datetime`, date columns → `date`. Edit forms are
-  unaffected — they always use the input matching the column type.
+  `enum`, `json`, `richtext` — plus anything added via
+  `registerWidget(name, impl)`. `richtext` is a dependency-free
+  contenteditable editor (bold/italic/underline/lists/links) storing
+  sanitized HTML in a text column; sanitize again wherever your own
+  site renders that HTML.
+- **`fields.<column>.display`** — how the value renders in the **list
+  view** (edit forms are unaffected):
+  - `'datetime'` → `2026-07-13 10:42` / `'date'` → `2026-07-13` (local
+    time; hover shows the raw value). Defaults: timestamp columns →
+    `datetime`, date columns → `date`.
+  - `'paragraph'` → long text shows as a small paragraph clamped to 3
+    lines instead of one truncated line; hovering shows more via the
+    tooltip. Pairs well with `widget: 'richtext'` — HTML is stripped to
+    clean text in the grid either way.
 
 Related top-level (non-per-table) options: `title`, `pageSize`,
 `hiddenTables`, `oauthProviders` — see `supacrud.config.example.js`.

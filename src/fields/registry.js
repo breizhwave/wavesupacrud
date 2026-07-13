@@ -5,6 +5,7 @@ import * as booleanField from './boolean.js';
 import * as datetime from './datetime.js';
 import * as enumField from './enum.js';
 import * as json from './json.js';
+import * as richtext from './richtext.js';
 
 /**
  * Widget contract: `create(column, value, overrides)` returns
@@ -19,6 +20,7 @@ const registry = {
   datetime,
   enum: enumField,
   json,
+  richtext,
 };
 
 /** Extension point for user-provided widgets (via supacrud.config.js). */

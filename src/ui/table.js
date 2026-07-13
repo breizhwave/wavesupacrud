@@ -1,5 +1,6 @@
 import { el } from './dom.js';
 import { formatTemporal, stripHtml } from './format.js';
+import { attachTooltip } from './tooltip.js';
 
 /**
  * TailAdmin-styled data table.
@@ -138,9 +139,13 @@ function formatCell(value, column) {
   // Rich text columns store HTML — show clean text in the grid.
   if (column.fieldWidget === 'richtext') text = stripHtml(text);
   // display: 'paragraph' → a few clamped lines instead of one truncated
-  // line; the native title tooltip still carries the longer text.
+  // line; hovering either shows the full text in a styled tooltip.
   if (column.display === 'paragraph') {
-    return el('p', { class: 'line-clamp-3 min-w-48 max-w-md whitespace-normal', title: text.slice(0, 600) }, text);
+    const p = el('p', { class: 'line-clamp-3 min-w-48 max-w-md whitespace-normal' }, text);
+    if (text.length > 120) attachTooltip(p, text);
+    return p;
   }
-  return el('span', { class: 'block max-w-xs truncate', title: text.slice(0, 600) }, text);
+  const span = el('span', { class: 'block max-w-xs truncate' }, text);
+  if (text.length > 40) attachTooltip(span, text);
+  return span;
 }

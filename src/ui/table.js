@@ -1,4 +1,5 @@
 import { el } from './dom.js';
+import { formatTemporal } from './format.js';
 
 /**
  * TailAdmin-styled data table.
@@ -125,6 +126,13 @@ function formatCell(value, column) {
         value ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'
       }`,
     }, String(value));
+  }
+  if (column.format === 'date' || column.format.startsWith('timestamp')) {
+    // column.display comes from the per-table `fields.<col>.display`
+    // override ('date' | 'datetime'); defaults follow the column type.
+    const mode = column.display ?? (column.format === 'date' ? 'date' : 'datetime');
+    return el('span', { class: 'whitespace-nowrap', title: String(value) },
+      formatTemporal(value, mode));
   }
   const text = typeof value === 'object' ? JSON.stringify(value) : String(value);
   return el('span', { class: 'block max-w-xs truncate', title: text }, text);

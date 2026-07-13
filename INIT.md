@@ -261,6 +261,59 @@ Rules that keep the system coherent:
   strings, or the compiler won't see them and they'll silently be
   missing from `main.css`.
 
+## 8. Per-table overrides reference
+
+Everything Supacrud shows is derived from the schema by default:
+humanized labels, all visible columns, widgets inferred from column
+types. The `tables` object in `supacrud.config.js` overrides those
+defaults **per table** — every key is optional, and tables you don't
+mention keep their defaults entirely.
+
+```js
+tables: {
+  posts: {
+    label: 'Blog posts',                  // display name
+    listColumns: ['id', 'title', 'created_at'],  // list view only
+    hiddenColumns: ['internal_notes'],    // hidden in list AND forms
+    defaultSort: { column: 'created_at', ascending: false },
+    fields: {                             // per-column overrides
+      body:       { widget: 'textarea', label: 'Content' },
+      metadata:   { widget: 'json' },
+      created_at: { display: 'date' },
+    },
+  },
+},
+```
+
+Behaviour of each key:
+
+- **`label`** — used everywhere the table is named: sidebar navigation,
+  dashboard card, list/form page titles. Default: humanized table name
+  (`blog_posts` → "Blog Posts").
+- **`listColumns`** — exact set **and order** of columns in the list
+  view. Affects the list only; forms still show every non-hidden
+  column. Unknown names are silently ignored.
+- **`defaultSort`** — initial ordering when the list opens:
+  `{ column: 'created_at', ascending: false }` (`ascending` defaults to
+  `true` when omitted). Clicking a column header still re-sorts for the
+  session. Ignored if the column doesn't exist in the schema.
+- **`hiddenColumns`** — removed from the list view and from forms.
+  ⚠️ This is cosmetic, not security: the column is still readable
+  through the API. Use RLS / column grants to actually protect data.
+- **`fields.<column>.label`** — form label for that field (list headers
+  keep the real column name, since filters/sort target it).
+- **`fields.<column>.widget`** — form input type, overriding the
+  inferred one: `text`, `textarea`, `number`, `boolean`, `datetime`,
+  `enum`, `json` — plus anything added via `registerWidget(name, impl)`.
+- **`fields.<column>.display`** — how date/timestamp values render in
+  the **list view**: `'datetime'` → `2026-07-13 10:42`, `'date'` →
+  `2026-07-13` (both local time; hover shows the raw value). Defaults:
+  timestamp columns → `datetime`, date columns → `date`. Edit forms are
+  unaffected — they always use the input matching the column type.
+
+Related top-level (non-per-table) options: `title`, `pageSize`,
+`hiddenTables`, `oauthProviders` — see `supacrud.config.example.js`.
+
 ## Troubleshooting recap
 
 | Symptom | Cause | Fix |

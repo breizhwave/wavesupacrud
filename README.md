@@ -74,7 +74,8 @@ npm test            # vitest unit tests
 npm run dev         # static server
 ```
 
-See [CLAUDE.md](CLAUDE.md) for architecture notes and hard constraints, and
+See [ROADMAP.md](ROADMAP.md) for what's planned,
+[CLAUDE.md](CLAUDE.md) for architecture notes and hard constraints, and
 [DEPENDENCIES.md](DEPENDENCIES.md) for how dependencies are loaded (spoiler:
 no CDN, no runtime npm — two committed artifacts).
 

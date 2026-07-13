@@ -30,9 +30,12 @@ export default {
     //   label: 'Blog posts',
     //   listColumns: ['id', 'title', 'status', 'created_at'],
     //   hiddenColumns: ['internal_notes'],
+    //   defaultSort: { column: 'created_at', ascending: false }, // initial list order
+
     //   fields: {
     //     body: { widget: 'textarea', label: 'Content' },
     //     metadata: { widget: 'json' },
+    //     created_at: { display: 'date' }, // list shows 2026-07-13 instead of 2026-07-13 10:42
     //   },
     // },
   },

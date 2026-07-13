@@ -44,6 +44,9 @@ export function tableOptions(config, name) {
     label: humanize(name),
     hiddenColumns: [],
     listColumns: null,
+    // { column: 'created_at', ascending: false } — initial list order;
+    // clicking a header still overrides it for the session.
+    defaultSort: null,
     fields: {},
     ...(config.tables?.[name] ?? {}),
   };

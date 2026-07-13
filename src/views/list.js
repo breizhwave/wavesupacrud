@@ -20,7 +20,7 @@ export async function renderList(params) {
   const cfg = tableOptions(config, table.name);
   const pk = primaryKey(table);
   const columns = visibleColumns(table, cfg);
-  const state = { page: 1, pageSize: config.pageSize, sort: null, search: '', filters: {} };
+  const state = { page: 1, pageSize: config.pageSize, sort: initialSort(table, cfg), search: '', filters: {} };
 
   const body = el('div', { class: 'sc-card' });
 
@@ -160,11 +160,25 @@ function emptyMessage(table, searching) {
   return 'No rows found.';
 }
 
+/** Validates cfg.defaultSort against the schema; ascending by default. */
+function initialSort(table, cfg) {
+  const ds = cfg.defaultSort;
+  if (!ds?.column || !table.columns.some((c) => c.name === ds.column)) return null;
+  return { column: ds.column, ascending: ds.ascending !== false };
+}
+
 function visibleColumns(table, cfg) {
+  // Carry display-affecting field overrides onto the column objects the
+  // table renders from (e.g. fields.created_at.display: 'date').
+  const withOverrides = (column) => {
+    const display = cfg.fields?.[column.name]?.display;
+    return display ? { ...column, display } : column;
+  };
   if (cfg.listColumns) {
     return cfg.listColumns
       .map((name) => table.columns.find((c) => c.name === name))
-      .filter(Boolean);
+      .filter(Boolean)
+      .map(withOverrides);
   }
-  return table.columns.filter((c) => !cfg.hiddenColumns?.includes(c.name));
+  return table.columns.filter((c) => !cfg.hiddenColumns?.includes(c.name)).map(withOverrides);
 }

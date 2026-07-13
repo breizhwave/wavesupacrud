@@ -20,9 +20,34 @@ export async function renderList(params) {
   const cfg = tableOptions(config, table.name);
   const pk = primaryKey(table);
   const columns = visibleColumns(table, cfg);
-  const state = { page: 1, pageSize: config.pageSize, sort: null, search: '' };
+  const state = { page: 1, pageSize: config.pageSize, sort: null, search: '', filters: {} };
 
   const body = el('div', { class: 'sc-card' });
+
+  let filterTimer;
+  let focusedFilter = null;
+
+  function onFilter(name, value, immediate) {
+    if (name === null) state.filters = {};
+    else if (value === '') delete state.filters[name];
+    else state.filters[name] = value;
+    state.page = 1;
+    focusedFilter = immediate ? null : name;
+    clearTimeout(filterTimer);
+    if (immediate) refresh();
+    else filterTimer = setTimeout(refresh, 300);
+  }
+
+  // Refreshing replaces the table DOM; put the caret back in the filter
+  // input the user was typing in.
+  function restoreFilterFocus() {
+    if (!focusedFilter) return;
+    const input = body.querySelector(`[data-filter="${CSS.escape(focusedFilter)}"]`);
+    if (!input) return;
+    input.focus();
+    const end = input.value.length;
+    try { input.setSelectionRange(end, end); } catch { /* not a text input */ }
+  }
 
   async function refresh() {
     body.replaceChildren(spinner());
@@ -32,7 +57,8 @@ export async function renderList(params) {
         dataTable({
           columns,
           rows,
-          empty: emptyMessage(table, state.search !== ''),
+          empty: emptyMessage(table, state.search !== '' || Object.keys(state.filters).length > 0),
+          filters: { values: state.filters, onFilter },
           sort: state.sort,
           onSort(column) {
             state.sort =
@@ -77,6 +103,7 @@ export async function renderList(params) {
           },
         }),
       );
+      restoreFilterFocus();
     } catch (err) {
       body.replaceChildren(
         el('p', { class: 'p-6 text-danger' }, err.message ?? String(err)),
@@ -126,7 +153,7 @@ function emptyMessage(table, searching) {
     return el('span', { class: 'font-medium text-warning' },
       '🔒 Access denied by Row Level Security: RLS is enabled on this table and no SELECT policy covers signed-in users, so every read returns zero rows. Add a policy (see INIT.md, step 5).');
   }
-  if (searching) return 'No rows match your search.';
+  if (searching) return 'No rows match your search or filters.';
   if (table.rlsEnabled) {
     return 'No rows found — the table may be empty, or its RLS policies may hide rows from your user (see INIT.md, step 5).';
   }

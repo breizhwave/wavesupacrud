@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildRange, buildSearchFilter, searchableColumns } from '../src/data/query.js';
+import { buildColumnFilters, buildRange, buildSearchFilter, searchableColumns } from '../src/data/query.js';
 
 describe('buildRange', () => {
   it('computes zero-based bounds for page 1', () => {
@@ -47,5 +47,56 @@ describe('buildSearchFilter', () => {
   it('returns null when the table has no searchable columns', () => {
     const numeric = { name: 'n', columns: [{ name: 'id', type: 'integer', format: '', enumValues: null }] };
     expect(buildSearchFilter(numeric, 'x')).toBeNull();
+  });
+});
+
+describe('buildColumnFilters', () => {
+  const filterTable = {
+    name: 'posts',
+    columns: [
+      { name: 'id', type: 'integer', format: 'bigint', enumValues: null },
+      { name: 'title', type: 'string', format: 'text', enumValues: null },
+      { name: 'status', type: 'string', format: 'post_status', enumValues: ['draft', 'published'] },
+      { name: 'is_live', type: 'boolean', format: 'boolean', enumValues: null },
+      { name: 'author_id', type: 'string', format: 'uuid', enumValues: null },
+      { name: 'meta', type: 'string', format: 'jsonb', enumValues: null },
+      { name: 'created_at', type: 'string', format: 'timestamp with time zone', enumValues: null },
+      { name: 'published_on', type: 'string', format: 'date', enumValues: null },
+    ],
+  };
+  const one = (filters) => buildColumnFilters(filterTable, filters);
+
+  it('uses ilike for free text', () => {
+    expect(one({ title: 'hello' })).toEqual([{ column: 'title', op: 'ilike', value: '%hello%' }]);
+  });
+
+  it('uses eq for enums and uuids, is for booleans', () => {
+    expect(one({ status: 'draft' })).toEqual([{ column: 'status', op: 'eq', value: 'draft' }]);
+    expect(one({ author_id: 'abc-123' })).toEqual([{ column: 'author_id', op: 'eq', value: 'abc-123' }]);
+    expect(one({ is_live: 'true' })).toEqual([{ column: 'is_live', op: 'is', value: 'true' }]);
+  });
+
+  it('supports comparison prefixes on numbers', () => {
+    expect(one({ id: '5' })).toEqual([{ column: 'id', op: 'eq', value: '5' }]);
+    expect(one({ id: '>10' })).toEqual([{ column: 'id', op: 'gt', value: '10' }]);
+    expect(one({ id: '<= -2.5' })).toEqual([{ column: 'id', op: 'lte', value: '-2.5' }]);
+    expect(one({ id: 'abc' })).toEqual([]);
+  });
+
+  it('expands a plain day on a timestamp column to a day range', () => {
+    expect(one({ created_at: '2026-01-31' })).toEqual([
+      { column: 'created_at', op: 'gte', value: '2026-01-31' },
+      { column: 'created_at', op: 'lt', value: '2026-02-01' },
+    ]);
+    expect(one({ created_at: '>=2026-01-01' })).toEqual([
+      { column: 'created_at', op: 'gte', value: '2026-01-01' },
+    ]);
+    expect(one({ published_on: '2026-01-31' })).toEqual([
+      { column: 'published_on', op: 'eq', value: '2026-01-31' },
+    ]);
+  });
+
+  it('skips json columns, unknown columns, and blank terms', () => {
+    expect(one({ meta: 'x', nope: 'y', title: '  ' })).toEqual([]);
   });
 });

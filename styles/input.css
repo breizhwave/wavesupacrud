@@ -1,0 +1,39 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply relative z-1 font-sans text-base font-normal text-body bg-whiten dark:bg-boxdark-2 dark:text-bodydark;
+  }
+}
+
+@layer components {
+  .sc-card {
+    @apply rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark;
+  }
+
+  .sc-btn {
+    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded bg-primary px-4 py-2 text-sm font-medium text-white transition hover:bg-opacity-90 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .sc-btn-ghost {
+    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded border border-stroke bg-transparent px-4 py-2 text-sm font-medium text-black transition hover:bg-gray disabled:cursor-not-allowed disabled:opacity-50 dark:border-strokedark dark:text-white dark:hover:bg-meta-4;
+  }
+
+  .sc-btn-danger {
+    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded bg-danger px-4 py-2 text-sm font-medium text-white transition hover:bg-opacity-90 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .sc-input {
+    @apply w-full rounded border border-stroke bg-transparent px-4 py-2.5 text-black outline-none transition focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary;
+  }
+
+  .sc-label {
+    @apply mb-2 block text-sm font-medium text-black dark:text-white;
+  }
+
+  .sc-page-title {
+    @apply text-2xl font-semibold text-black dark:text-white;
+  }
+}

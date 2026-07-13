@@ -1,0 +1,12 @@
+# Dependencies (dev tooling only — the shipped app never needs them)
+node_modules/
+
+# Per-deployment configuration (copy supacrud.config.example.js instead)
+supacrud.config.js
+
+# Private notes — never committed
+SECRETS.local.md
+
+# OS / editor noise
+.DS_Store
+.idea/

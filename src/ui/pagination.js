@@ -17,10 +17,10 @@ export function pagination({ page, pageSize, count, onPage }) {
   for (let p = windowStart; p <= Math.min(pages, windowStart + 4); p++) {
     numbers.push(
       el('button', {
-        class: `flex h-9 min-w-9 items-center justify-center rounded px-2 text-sm ${
+        class: `flex h-9 min-w-9 items-center justify-center rounded-lg px-2 text-sm ${
           p === page
-            ? 'bg-primary text-white'
-            : 'hover:bg-gray dark:hover:bg-meta-4 text-black dark:text-white'
+            ? 'bg-primary/90 text-white shadow-lg shadow-primary/25'
+            : 'text-black hover:bg-white/50 dark:text-white dark:hover:bg-white/10'
         }`,
         'aria-current': p === page ? 'page' : false,
         onclick: () => p !== page && onPage(p),
@@ -28,7 +28,7 @@ export function pagination({ page, pageSize, count, onPage }) {
     );
   }
 
-  return el('div', { class: 'flex flex-wrap items-center justify-between gap-4 border-t border-stroke px-4 py-4 dark:border-strokedark' },
+  return el('div', { class: 'flex flex-wrap items-center justify-between gap-4 border-t border-black/5 px-4 py-4 dark:border-white/10' },
     el('p', { class: 'text-sm' }, `Showing ${from}–${to} of ${count}`),
     el('nav', { class: 'flex items-center gap-1', 'aria-label': 'Pagination' },
       el('button', { class: 'sc-btn-ghost px-3 py-1.5', disabled: page <= 1, onclick: () => onPage(page - 1) }, 'Prev'),

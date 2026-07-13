@@ -4,29 +4,64 @@
 
 @layer base {
   body {
-    @apply relative z-1 font-sans text-base font-normal text-body bg-whiten dark:bg-boxdark-2 dark:text-bodydark;
+    @apply relative z-1 font-sans text-base font-normal text-body dark:text-bodydark;
+    background-color: theme('colors.whiten');
+  }
+
+  /* Gradient mesh the glass panels blur against — without it, translucency
+     reads as flat gray. Fixed so panels scroll over it. */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(42rem 42rem at 10% -5%, rgba(60, 80, 224, 0.16), transparent 60%),
+      radial-gradient(36rem 36rem at 95% 10%, rgba(128, 202, 238, 0.30), transparent 60%),
+      radial-gradient(48rem 48rem at 50% 112%, rgba(168, 85, 247, 0.14), transparent 65%);
+  }
+
+  .dark body {
+    background-color: #0c1120;
+  }
+
+  .dark body::before {
+    background:
+      radial-gradient(42rem 42rem at 10% -5%, rgba(76, 98, 240, 0.3), transparent 60%),
+      radial-gradient(36rem 36rem at 95% 10%, rgba(34, 211, 238, 0.14), transparent 60%),
+      radial-gradient(48rem 48rem at 50% 115%, rgba(168, 85, 247, 0.22), transparent 65%);
   }
 }
 
 @layer components {
+  /* Translucent panel. Deliberately NO backdrop-blur: Chromium paints
+     very tall blurred elements (long tables) as solid white when the
+     blur texture exceeds GPU limits. Blur is reserved for viewport-
+     bounded chrome (.sc-glassbar, modal overlay). */
   .sc-card {
-    @apply rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark;
+    @apply rounded-2xl border border-white/50 bg-white/75 shadow-glass dark:border-white/10 dark:bg-white/[0.07];
+  }
+
+  /* Glass chrome for the sidebar/header bars (add border-r / border-b). */
+  .sc-glassbar {
+    @apply border-white/40 bg-white/50 backdrop-blur-xl dark:border-white/10 dark:bg-[#0f1626]/60;
   }
 
   .sc-btn {
-    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded bg-primary px-4 py-2 text-sm font-medium text-white transition hover:bg-opacity-90 disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-primary/90 px-4 py-2 text-sm font-medium text-white shadow-lg shadow-primary/25 transition hover:bg-primary disabled:cursor-not-allowed disabled:opacity-50;
   }
 
   .sc-btn-ghost {
-    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded border border-stroke bg-transparent px-4 py-2 text-sm font-medium text-black transition hover:bg-gray disabled:cursor-not-allowed disabled:opacity-50 dark:border-strokedark dark:text-white dark:hover:bg-meta-4;
+    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-white/50 bg-white/50 px-4 py-2 text-sm font-medium text-black transition hover:bg-white/80 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10;
   }
 
   .sc-btn-danger {
-    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded bg-danger px-4 py-2 text-sm font-medium text-white transition hover:bg-opacity-90 disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-danger/90 px-4 py-2 text-sm font-medium text-white shadow-lg shadow-danger/25 transition hover:bg-danger disabled:cursor-not-allowed disabled:opacity-50;
   }
 
   .sc-input {
-    @apply w-full rounded border border-stroke bg-transparent px-4 py-2.5 text-black outline-none transition focus:border-primary dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary;
+    @apply w-full rounded-xl border border-white/50 bg-white/50 px-4 py-2.5 text-black outline-none transition placeholder:text-body/60 focus:border-primary/60 focus:bg-white/80 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-bodydark/50 dark:focus:border-primary/60 dark:focus:bg-white/10;
   }
 
   .sc-label {

@@ -80,9 +80,9 @@ export function renderLogin() {
         ? el('div', { class: 'mb-6' },
             el('div', { class: 'flex flex-col gap-3' }, providers),
             el('div', { class: 'mt-6 flex items-center gap-3' },
-              el('span', { class: 'h-px flex-1 bg-stroke dark:bg-strokedark' }),
+              el('span', { class: 'h-px flex-1 bg-black/10 dark:bg-white/10' }),
               el('span', { class: 'text-xs uppercase text-bodydark2' }, 'or with email'),
-              el('span', { class: 'h-px flex-1 bg-stroke dark:bg-strokedark' }),
+              el('span', { class: 'h-px flex-1 bg-black/10 dark:bg-white/10' }),
             ),
           )
         : null,

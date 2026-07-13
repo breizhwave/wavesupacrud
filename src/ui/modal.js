@@ -22,7 +22,7 @@ export function confirmDialog({ title = 'Are you sure?', message = '', confirmLa
     const cancelBtn = el('button', { class: 'sc-btn-ghost', onclick: () => close(false) }, 'Cancel');
 
     const overlay = el('div', {
-      class: 'fixed inset-0 z-9999 flex items-center justify-center bg-black/60 p-4',
+      class: 'fixed inset-0 z-9999 flex items-center justify-center bg-black/30 p-4 backdrop-blur-sm dark:bg-black/50',
       onclick: (e) => { if (e.target === overlay) close(false); },
     },
       el('div', { class: 'sc-card w-full max-w-md p-6 sm:p-8', role: 'dialog', 'aria-modal': 'true', 'aria-label': title },

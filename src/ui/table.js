@@ -35,7 +35,7 @@ export function dataTable({ columns, rows, sort = null, onSort = null, actions =
   const bodyRows = rows.length === 0
     ? [el('tr', {}, el('td', { class: 'px-4 py-10 text-center', colspan: headCells.length }, empty))]
     : rows.map((row) =>
-        el('tr', { class: 'hover:bg-white/40 dark:hover:bg-white/[0.04]' },
+        el('tr', { class: 'even:bg-black/[0.03] hover:bg-white/40 dark:even:bg-white/[0.03] dark:hover:bg-white/[0.06]' },
           columns.map((column) =>
             el('td', { class: 'border-b border-black/5 px-4 py-3 dark:border-white/10' },
               formatCell(row[column.name], column)),

@@ -207,6 +207,60 @@ Honest limitations (it's a browser, not pg_dump): data contains only rows
 varchar lengths, triggers, views, or grants). For byte-exact dumps use
 `supabase db dump` or `pg_dump`.
 
+## 7. UI styling (Tailwind generation)
+
+The glass UI depends on **Tailwind CSS only**, and Tailwind runs at
+**dev time only** — the deployed app just loads the committed
+`styles/main.css`. No CDN, no fonts, no icon packs, no Tailwind plugins,
+no runtime JS for styling; TailAdmin was a design reference, never a
+dependency. Icons are unicode glyphs and inline SVG.
+
+### How a style change flows
+
+```
+tailwind.config.js        design tokens: colors, shadow-glass, z-index
+styles/input.css          gradient mesh background + .sc-* component
+                          classes (@layer components)
+src/**/*.js + index.html  Tailwind utility classes in the markup
+        │
+        ▼   npm run css:build   (or css:watch while developing)
+styles/main.css           compiled, minified, COMMITTED — this is the
+                          only stylesheet the browser ever loads
+```
+
+The Tailwind CLI scans `index.html` and `src/**/*.js` (the `content`
+globs in `tailwind.config.js`) and emits only the classes actually
+used — which is why `main.css` stays ~25 KB.
+
+### Working on styles
+
+```sh
+npm install            # once — brings the Tailwind CLI (dev tooling only)
+npm run css:watch      # recompiles on every change while you work
+npm run css:build      # minified build — run before committing
+```
+
+Rules that keep the system coherent:
+
+- **Change tokens, not views.** Colors, shadows, and the shared
+  component recipes (`.sc-card`, `.sc-btn`, `.sc-input`, `.sc-glassbar`,
+  …) live in `tailwind.config.js` + `styles/input.css`. Restyling the
+  whole app (as the glass theme did) shouldn't require touching views.
+- **Commit `styles/main.css`** together with the source change — it is a
+  build artifact kept in git so deployments need no build step. Never
+  edit it by hand.
+- **Dark mode** uses the `class` strategy: the header toggle stamps
+  `dark` on `<html>` and persists to `localStorage` (`sc-theme`); an
+  inline script in `index.html` re-applies it before first paint.
+- **Don't add `backdrop-blur` to tall/scrollable content.** Chromium
+  paints very tall blurred elements as solid white (GPU texture limit).
+  Frosted blur belongs only on viewport-bounded chrome: the sidebar and
+  sticky header (`.sc-glassbar`) and the modal overlay. Cards are
+  translucent without blur for exactly this reason.
+- Dynamically composed class names must appear somewhere as complete
+  strings, or the compiler won't see them and they'll silently be
+  missing from `main.css`.
+
 ## Troubleshooting recap
 
 | Symptom | Cause | Fix |
@@ -218,3 +272,4 @@ varchar lengths, triggers, views, or grants). For byte-exact dumps use
 | Login works, wrong page after GitHub redirect | app URL missing from Redirect URLs | step 4c |
 | "🔒 Access denied by Row Level Security" on a table | RLS enabled, no SELECT policy for signed-in users | step 5 |
 | Tables visible but empty / missing tables | RLS policies hide rows from your user | step 5 |
+| Style/class change has no visual effect | `styles/main.css` not recompiled | step 7, `npm run css:build` |

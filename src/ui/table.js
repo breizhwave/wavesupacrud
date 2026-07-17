@@ -31,19 +31,19 @@ export function dataTable({ columns, rows, sort = null, onSort = null, actions =
         : label,
     );
   });
-  if (actions) headCells.push(el('th', { class: 'px-4 py-4 text-right font-medium text-black dark:text-white' }, 'Actions'));
+  if (actions) headCells.push(el('th', { class: `${STICKY_HEAD} px-4 py-4 text-right font-medium text-black dark:text-white` }, 'Actions'));
 
   const bodyRows = rows.length === 0
     ? [el('tr', {}, el('td', { class: 'px-4 py-10 text-center', colspan: headCells.length }, empty))]
-    : rows.map((row) =>
+    : rows.map((row, i) =>
         el('tr', { class: 'even:bg-black/[0.03] hover:bg-white/40 dark:even:bg-white/[0.03] dark:hover:bg-white/[0.06]' },
           columns.map((column) =>
             el('td', { class: 'border-b border-black/5 px-4 py-3 dark:border-white/10' },
               formatCell(row[column.name], column)),
           ),
           actions
-            ? el('td', { class: 'border-b border-black/5 px-4 py-3 dark:border-white/10' },
-                el('div', { class: 'flex justify-end gap-2' }, actions(row)))
+            ? el('td', { class: `${STICKY_ROW[i % 2]} border-b border-black/5 px-4 py-3 dark:border-white/10` },
+                el('div', { class: 'flex justify-end gap-1.5' }, actions(row)))
             : null,
         ),
       );
@@ -54,7 +54,7 @@ export function dataTable({ columns, rows, sort = null, onSort = null, actions =
           el('th', { class: 'px-4 pb-3 pt-1 font-normal' }, filterControl(column, filters)),
         ),
         actions
-          ? el('th', { class: 'px-4 pb-3 pt-1 text-right font-normal' },
+          ? el('th', { class: `${STICKY_HEAD} px-4 pb-3 pt-1 text-right font-normal` },
               Object.keys(filters.values).length > 0
                 ? el('button', {
                     class: 'text-xs font-medium text-danger hover:underline',
@@ -75,6 +75,19 @@ export function dataTable({ columns, rows, sort = null, onSort = null, actions =
     ),
   );
 }
+
+// Pins the actions column inside the horizontally scrolling wrapper so
+// row buttons never leave the viewport. Frosted backdrop (small cells —
+// safe from the tall-element Chromium blur bug) + inset shadow as the
+// boundary against scrolling content. Sticky cells must paint their own
+// background, so row cells mirror the zebra stripe by parity.
+const STICKY_BASE =
+  'sticky right-0 z-10 backdrop-blur-md shadow-[inset_10px_0_8px_-10px_rgba(0,0,0,0.15)]';
+const STICKY_HEAD = `${STICKY_BASE} bg-white/85 dark:bg-boxdark/85`;
+const STICKY_ROW = [
+  `${STICKY_BASE} bg-white/85 dark:bg-boxdark/85`, // odd rows (1st, 3rd, …)
+  `${STICKY_BASE} bg-[#edf0f7]/90 dark:bg-[#2b3547]/90`, // even rows — matches the stripe tint
+];
 
 const FILTER_INPUT = 'sc-input min-w-24 px-2 py-1.5 text-xs font-normal';
 

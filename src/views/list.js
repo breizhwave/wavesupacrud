@@ -3,7 +3,8 @@ import { appStore } from '../core/store.js';
 import { getTable, primaryKey } from '../core/schema.js';
 import { tableOptions } from '../core/config.js';
 import { fetchList } from '../data/query.js';
-import { deleteRow } from '../data/mutations.js';
+import { deleteRow, duplicateRow } from '../data/mutations.js';
+import { attachTooltip } from '../ui/tooltip.js';
 import { dataTable } from '../ui/table.js';
 import { pagination } from '../ui/pagination.js';
 import { spinner } from '../ui/spinner.js';
@@ -69,28 +70,32 @@ export async function renderList(params) {
             refresh();
           },
           actions: (row) => [
-            el('button', {
-              class: 'sc-btn-ghost px-3 py-1',
-              onclick: () => navigate(`/tables/${table.name}/edit/${encodeURIComponent(row[pk])}`),
-            }, 'Edit'),
-            el('button', {
-              class: 'sc-btn-danger px-3 py-1',
-              onclick: async () => {
-                const ok = await confirmDialog({
-                  title: `Delete row ${row[pk]}?`,
-                  message: 'This cannot be undone.',
-                  confirmLabel: 'Delete',
-                });
-                if (!ok) return;
-                try {
-                  await deleteRow(table, row[pk]);
-                  toast('Row deleted.');
-                  refresh();
-                } catch (err) {
-                  toast(err.message, 'error');
-                }
-              },
-            }, 'Delete'),
+            actionButton('✎', 'Edit', 'sc-btn-ghost', () =>
+              navigate(`/tables/${table.name}/edit/${encodeURIComponent(row[pk])}`)),
+            actionButton('⧉', 'Duplicate', 'sc-btn-ghost', async () => {
+              try {
+                await duplicateRow(table, row);
+                toast('Row duplicated.');
+                refresh();
+              } catch (err) {
+                toast(err.message, 'error');
+              }
+            }),
+            actionButton('🗑', 'Delete', 'sc-btn-danger', async () => {
+              const ok = await confirmDialog({
+                title: `Delete row ${row[pk]}?`,
+                message: 'This cannot be undone.',
+                confirmLabel: 'Delete',
+              });
+              if (!ok) return;
+              try {
+                await deleteRow(table, row[pk]);
+                toast('Row deleted.');
+                refresh();
+              } catch (err) {
+                toast(err.message, 'error');
+              }
+            }),
           ],
         }),
         pagination({
@@ -158,6 +163,13 @@ function emptyMessage(table, searching) {
     return 'No rows found — the table may be empty, or its RLS policies may hide rows from your user (see INIT.md, step 5).';
   }
   return 'No rows found.';
+}
+
+/** Compact icon button with an accessible label and hover tooltip. */
+function actionButton(icon, label, cls, onclick) {
+  const btn = el('button', { class: `${cls} px-2.5 py-1.5`, 'aria-label': label, onclick }, icon);
+  attachTooltip(btn, label);
+  return btn;
 }
 
 /** Validates cfg.defaultSort against the schema; ascending by default. */

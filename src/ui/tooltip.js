@@ -10,9 +10,12 @@ let tip = null;
 
 function getTip() {
   if (!tip || !tip.isConnected) {
+    // Solid background — glass translucency is unreadable floating
+    // over arbitrary content (same reasoning as toasts).
     tip = el('div', {
       class:
-        'sc-card fixed z-9999 hidden max-h-64 w-max max-w-md overflow-y-auto ' +
+        'fixed z-9999 hidden max-h-64 w-max max-w-md overflow-y-auto rounded-xl ' +
+        'border border-stroke bg-white shadow-glass dark:border-strokedark dark:bg-boxdark ' +
         'whitespace-pre-wrap break-words p-3 text-sm text-black dark:text-white',
       role: 'tooltip',
     });

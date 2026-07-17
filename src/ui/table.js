@@ -13,8 +13,10 @@ import { attachTooltip } from './tooltip.js';
  * @param {Node|string} [opts.empty] what to show when there are no rows
  * @param {{values: object, onFilter: (name: string|null, value: string, immediate: boolean) => void}} [opts.filters]
  *   per-column filter row; onFilter(null, …) means "clear all"
+ * @param {{canEdit: (column) => boolean, createField: (column, value) => object, save: (row, column, value) => Promise}} [opts.inline]
+ *   double-click in-place editing for simple cells
  */
-export function dataTable({ columns, rows, sort = null, onSort = null, actions = null, empty = 'No rows found.', filters = null }) {
+export function dataTable({ columns, rows, sort = null, onSort = null, actions = null, empty = 'No rows found.', filters = null, inline = null }) {
   const headCells = columns.map((column) => {
     const isSorted = sort?.column === column.name;
     const label = el('span', { class: 'inline-flex items-center gap-1' },
@@ -37,10 +39,15 @@ export function dataTable({ columns, rows, sort = null, onSort = null, actions =
     ? [el('tr', {}, el('td', { class: 'px-4 py-10 text-center', colspan: headCells.length }, empty))]
     : rows.map((row, i) =>
         el('tr', { class: 'even:bg-black/[0.03] hover:bg-white/40 dark:even:bg-white/[0.03] dark:hover:bg-white/[0.06]' },
-          columns.map((column) =>
-            el('td', { class: 'border-b border-black/5 px-4 py-3 dark:border-white/10' },
-              formatCell(row[column.name], column)),
-          ),
+          columns.map((column) => {
+            const td = el('td', { class: 'border-b border-black/5 px-4 py-3 dark:border-white/10' },
+              formatCell(row[column.name], column));
+            if (inline?.canEdit(column)) {
+              td.classList.add('cursor-cell');
+              td.addEventListener('dblclick', () => startInlineEdit(td, row, column, inline));
+            }
+            return td;
+          }),
           actions
             ? el('td', { class: `${STICKY_ROW[i % 2]} border-b border-black/5 px-4 py-3 dark:border-white/10` },
                 el('div', { class: 'flex justify-end gap-1.5' }, actions(row)))
@@ -128,6 +135,47 @@ function filterControl(column, { values, onFilter }) {
     'aria-label': `Filter ${column.name}`,
     oninput: (e) => onFilter(column.name, e.target.value, false),
   });
+}
+
+/**
+ * Swaps a cell's content for the column's field widget.
+ * Enter saves (the list refresh re-renders the cell), Escape cancels.
+ */
+function startInlineEdit(td, row, column, inline) {
+  if (td.dataset.editing) return;
+  td.dataset.editing = 'true';
+  const original = [...td.childNodes];
+  const field = inline.createField(column, row[column.name]);
+
+  const cancel = () => {
+    delete td.dataset.editing;
+    td.replaceChildren(...original);
+  };
+
+  const wrap = el('div', { class: 'min-w-40' },
+    field.el,
+    el('p', { class: 'mt-1 whitespace-nowrap text-xs text-bodydark2' }, '↵ save · esc cancel'),
+  );
+  wrap.addEventListener('keydown', async (e) => {
+    if (e.key === 'Escape') {
+      e.stopPropagation();
+      cancel();
+    } else if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+      e.preventDefault();
+      try {
+        await inline.save(row, column, field.getValue());
+      } catch (err) {
+        cancel();
+        throw err;
+      }
+    }
+  });
+
+  td.replaceChildren(wrap);
+  const input = field.el.matches('input,select,textarea')
+    ? field.el
+    : field.el.querySelector('input,select,textarea');
+  input?.focus();
 }
 
 function formatCell(value, column) {

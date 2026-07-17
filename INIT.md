@@ -293,6 +293,15 @@ Behaviour of each key:
 - **`listColumns`** — exact set **and order** of columns in the list
   view. Affects the list only; forms still show every non-hidden
   column. Unknown names are silently ignored.
+- **`editIn`** — `'page'` (default) routes create/edit to their own
+  screens (`#/tables/x/edit/42`, deep-linkable); `'drawer'` opens them
+  in a slide-over panel on top of the list, which keeps your scroll
+  position and closes with ✕, Escape, or a click outside. In both modes
+  list state (page, sort, search, filters) is preserved per session.
+- **`inlineEdit`** — `true` enables double-click in-place editing of
+  simple cells (text, number, boolean, date, enum). Enter saves, Escape
+  cancels. Primary keys, json, and richtext columns always go through
+  the form.
 - **`defaultSort`** — initial ordering when the list opens:
   `{ column: 'created_at', ascending: false }` (`ascending` defaults to
   `true` when omitted). Clicking a column header still re-sorts for the

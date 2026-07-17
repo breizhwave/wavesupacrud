@@ -3,8 +3,11 @@ import { appStore } from '../core/store.js';
 import { getTable, primaryKey } from '../core/schema.js';
 import { tableOptions } from '../core/config.js';
 import { fetchList } from '../data/query.js';
-import { deleteRow, duplicateRow } from '../data/mutations.js';
+import { deleteRow, duplicateRow, updateRow } from '../data/mutations.js';
 import { attachTooltip } from '../ui/tooltip.js';
+import { openDrawer } from '../ui/drawer.js';
+import { widgetFor, inferWidget } from '../fields/registry.js';
+import { buildFormView } from './form.js';
 import { dataTable } from '../ui/table.js';
 import { pagination } from '../ui/pagination.js';
 import { spinner } from '../ui/spinner.js';
@@ -21,9 +24,55 @@ export async function renderList(params) {
   const cfg = tableOptions(config, table.name);
   const pk = primaryKey(table);
   const columns = visibleColumns(table, cfg);
-  const state = { page: 1, pageSize: config.pageSize, sort: initialSort(table, cfg), search: '', filters: {} };
+  const saved = loadListState(table);
+  const state = {
+    page: saved?.page ?? 1,
+    pageSize: config.pageSize,
+    sort: saved?.sort ?? initialSort(table, cfg),
+    search: saved?.search ?? '',
+    filters: saved?.filters ?? {},
+  };
 
   const body = el('div', { class: 'sc-card' });
+
+  /** Opens create/edit — routed page by default, slide-over when editIn: 'drawer'. */
+  function openForm(row) {
+    if (cfg.editIn !== 'drawer') {
+      navigate(row
+        ? `/tables/${table.name}/edit/${encodeURIComponent(row[pk])}`
+        : `/tables/${table.name}/new`);
+      return;
+    }
+    let close;
+    const form = buildFormView({
+      table, cfg, row,
+      onSaved: () => { close(); refresh(); },
+      onCancel: () => close(),
+    });
+    close = openDrawer({ title: `${row ? 'Edit' : 'New'} — ${cfg.label}`, content: form });
+  }
+
+  const INLINE_WIDGETS = new Set(['text', 'textarea', 'number', 'boolean', 'datetime', 'enum']);
+  const inline = cfg.inlineEdit
+    ? {
+        canEdit: (column) =>
+          !column.isPrimaryKey &&
+          INLINE_WIDGETS.has(cfg.fields?.[column.name]?.widget ?? inferWidget(column)),
+        createField: (column, value) => {
+          const overrides = cfg.fields?.[column.name] ?? {};
+          return widgetFor(column, overrides).create(column, value, overrides);
+        },
+        save: async (row, column, value) => {
+          try {
+            await updateRow(table, row[pk], { [column.name]: value });
+            toast('Saved.');
+            refresh();
+          } catch (err) {
+            toast(err.message ?? String(err), 'error');
+          }
+        },
+      }
+    : null;
 
   let filterTimer;
   let focusedFilter = null;
@@ -51,13 +100,20 @@ export async function renderList(params) {
   }
 
   async function refresh() {
+    saveListState(table, state);
     body.replaceChildren(spinner());
     try {
       const { rows, count } = await fetchList(table, state);
+      // A restored page can be past the end if data changed meanwhile.
+      if (rows.length === 0 && count > 0 && state.page > 1) {
+        state.page = 1;
+        return refresh();
+      }
       body.replaceChildren(
         dataTable({
           columns,
           rows,
+          inline,
           empty: emptyMessage(table, state.search !== '' || Object.keys(state.filters).length > 0),
           filters: { values: state.filters, onFilter },
           sort: state.sort,
@@ -70,8 +126,7 @@ export async function renderList(params) {
             refresh();
           },
           actions: (row) => [
-            actionButton('✎', 'Edit', 'sc-btn-ghost', () =>
-              navigate(`/tables/${table.name}/edit/${encodeURIComponent(row[pk])}`)),
+            actionButton('✎', 'Edit', 'sc-btn-ghost', () => openForm(row)),
             actionButton('⧉', 'Duplicate', 'sc-btn-ghost', async () => {
               try {
                 await duplicateRow(table, row);
@@ -120,6 +175,7 @@ export async function renderList(params) {
   const search = el('input', {
     type: 'search',
     class: 'sc-input max-w-xs',
+    value: state.search,
     placeholder: 'Search…',
     'aria-label': `Search ${cfg.label}`,
     oninput: (e) => {
@@ -141,7 +197,7 @@ export async function renderList(params) {
         search,
         el('button', {
           class: 'sc-btn',
-          onclick: () => navigate(`/tables/${table.name}/new`),
+          onclick: () => openForm(null),
         }, '+ Add row'),
       ),
     ),
@@ -163,6 +219,33 @@ function emptyMessage(table, searching) {
     return 'No rows found — the table may be empty, or its RLS policies may hide rows from your user (see INIT.md, step 5).';
   }
   return 'No rows found.';
+}
+
+/**
+ * Per-table list state (page, sort, search, filters) survives navigation
+ * within the session, so editing a row and coming back keeps the view.
+ */
+function loadListState(table) {
+  try {
+    const raw = sessionStorage.getItem(`sc-list:${table.name}`);
+    if (!raw) return null;
+    const s = JSON.parse(raw);
+    if (s.sort && !table.columns.some((c) => c.name === s.sort.column)) s.sort = null;
+    return s;
+  } catch {
+    return null;
+  }
+}
+
+function saveListState(table, state) {
+  try {
+    sessionStorage.setItem(`sc-list:${table.name}`, JSON.stringify({
+      page: state.page,
+      sort: state.sort,
+      search: state.search,
+      filters: state.filters,
+    }));
+  } catch { /* storage full/blocked — persistence is best-effort */ }
 }
 
 /** Compact icon button with an accessible label and hover tooltip. */

@@ -47,6 +47,11 @@ export function tableOptions(config, name) {
     // { column: 'created_at', ascending: false } — initial list order;
     // clicking a header still overrides it for the session.
     defaultSort: null,
+    // 'page' (default) → create/edit are routed pages;
+    // 'drawer' → they open in a slide-over panel, keeping the list state.
+    editIn: 'page',
+    // true → double-click simple cells to edit in place.
+    inlineEdit: false,
     fields: {},
     ...(config.tables?.[name] ?? {}),
   };

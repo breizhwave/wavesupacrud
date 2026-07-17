@@ -31,6 +31,8 @@ export default {
     //   listColumns: ['id', 'title', 'status', 'created_at'],
     //   hiddenColumns: ['internal_notes'],
     //   defaultSort: { column: 'created_at', ascending: false }, // initial list order
+    //   editIn: 'drawer',   // open create/edit in a slide-over panel instead of a page
+    //   inlineEdit: true,   // double-click simple cells to edit in place
 
     //   fields: {
     //     body: { widget: 'richtext', display: 'paragraph' }, // HTML editor; grid shows clamped text

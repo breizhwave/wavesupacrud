@@ -13,7 +13,10 @@ no runtime dependencies beyond the vendored supabase-js).
   filters, RLS-aware empty states
 - Field widgets: text, textarea, number, boolean, datetime, enum, json
   (+ `registerWidget()` extension point)
-- Per-table config overrides incl. date/datetime display formatting
+- Per-table config overrides incl. date/datetime display formatting,
+  default sort, drawer editing (`editIn`), inline cell editing
+- List state (page, sort, search, filters) persisted per session
+- Rich text widget + paragraph display mode, styled hover tooltips
 - Zipped modular backups (roles / schema+policies / data)
 - Glass UI theme (Tailwind, dev-time only), dark mode
 
@@ -40,8 +43,8 @@ no runtime dependencies beyond the vendored supabase-js).
 - **Export per table** — CSV/JSON download of the current filtered list.
 - **Restore/import** — replay a Supacrud backup zip (data first, schema
   diff warning), within what RLS permits.
-- **Page-size selector & saved views** — persist per-table page size,
-  sort, and filters in localStorage.
+- **Page-size selector & named saved views** — sort/filters already
+  persist per session; add a page-size control and durable named views.
 - **Multi-admin RLS pattern** — documented `profiles.is_admin` setup
   with copy-paste policies, replacing per-UUID policies (INIT.md §5).
 - **Theming presets** — alternative token packs (solid/flat, high
